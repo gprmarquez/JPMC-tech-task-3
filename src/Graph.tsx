@@ -21,12 +21,23 @@ class Graph extends Component<IProps, {}> {
   componentDidMount() {
     // Get element from the DOM.
     const elem = document.getElementsByTagName('perspective-viewer')[0] as unknown as PerspectiveViewerElement;
-
-    const schema = {
+    
+    /*Commented out original file code to show before and after changes
+      const schema = {
       stock: 'string',
       top_ask_price: 'float',
       top_bid_price: 'float',
-      timestamp: 'date',
+      timestamp: 'date', 
+      */
+
+      const schema = {
+        price_abc: 'float', //price_abc and price_def have been added to calculate the ratio
+        price_def: 'float',
+        ratio: 'float', //this is the value that we would like to consider
+        timestamp: 'date',
+        upper_bound: 'float', //bounds will serve as calculated thresholds to trigger when an alert would occur 
+        lower_bound: 'float',
+        trigger_alert: 'float',
     };
 
     if (window.perspective && window.perspective.worker()) {
@@ -34,9 +45,11 @@ class Graph extends Component<IProps, {}> {
     }
     if (this.table) {
       // Load the `table` in the `<perspective-viewer>` DOM reference.
+
+      /*Commented out original file code to show before and after changes
       elem.load(this.table);
       elem.setAttribute('view', 'y_line');
-      elem.setAttribute('column-pivots', '["stock"]');
+      elem.setAttribute('column-pivots', '["stock"]'); removed since we are no longer concerned about the separate prices of each stock for our graph
       elem.setAttribute('row-pivots', '["timestamp"]');
       elem.setAttribute('columns', '["top_ask_price"]');
       elem.setAttribute('aggregates', JSON.stringify({
@@ -44,15 +57,39 @@ class Graph extends Component<IProps, {}> {
         top_ask_price: 'avg',
         top_bid_price: 'avg',
         timestamp: 'distinct count',
+        */
+
+      elem.load(this.table);
+      elem.setAttribute('view', 'y_line');
+      elem.setAttribute('row-pivots', '["timestamp"]');
+      elem.setAttribute('columns', '["ratio", "lower_bound", "upper_bound", "trigger_alert"]'); //this specifies which points we would like graphed on the y axis
+      elem.setAttribute('aggregates', JSON.stringify({ //this code block averages out values that are not uniquely associated with a specific timestamp
+        price_abc: 'avg',
+        price_def: 'avg',
+        ratio: 'avg',
+        timestamp: 'distinct count',
+        upper_bound: 'avg',
+        lower_bound: 'avg',
+        trigger_alert: 'avg',
       }));
     }
   }
 
-  componentDidUpdate() {
+  /*Commented out original file code to show before and after changes
+    componentDidUpdate() {
     if (this.table) {
       this.table.update(
         DataManipulator.generateRow(this.props.data),
       );
+    }
+  } 
+  */
+  
+  componentDidUpdate() {
+    if (this.table) {
+      this.table.update([ //changed the value to an array
+        DataManipulator.generateRow(this.props.data),
+      ]);
     }
   }
 }
